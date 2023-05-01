@@ -8,9 +8,20 @@ const { createTokens, validateToken } = require("./JWT");
 app.use(express.json());
 app.use(cookieParser());
 
+app.set("view-engine", "ejs"); // to use ejs syntex tell to server
+app.use(express.urlencoded({ extended: false }));
+
 const users = [];
 
-app.post("/register", (req, res) => {
+app.get("/", (req, res) => {
+  res.render("index.ejs");
+});
+
+app.get("/register", (req, res) => {
+  res.render("register.ejs");
+});
+
+app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
   const existingUser = users.find((user) => user.email === email);
@@ -23,13 +34,14 @@ app.post("/register", (req, res) => {
         users.push({
           id: Date.now().toString(),
           username: username,
-          email: req.body.email,
+          email: email,
           password: hash,
         });
 
-        // console.log(users)
+        console.log(users)
 
-        res.json("USER REGISTERED");
+        // res.json("USER REGISTERED");
+        res.redirect("/login");
       } catch (err) {
         if (err) {
           res.status(400).json({ error: err });
@@ -37,6 +49,10 @@ app.post("/register", (req, res) => {
       }
     });
   }
+});
+
+app.get("/login", (req, res) => {
+  res.render("login.ejs");
 });
 
 app.post("/login", (req, res) => {
@@ -61,14 +77,24 @@ app.post("/login", (req, res) => {
         httpOnly: true,
       });
 
-      res.json("LOGGED IN");
+      console.log("login ",users)
+      res.redirect("/profile");
+
+      // res.json("LOGGED IN");
     }
   });
 });
 
 app.get("/profile", validateToken, (req, res) => {
-  res.json("profile");
+  res.render("profile.ejs");
+  // res.json("profile");
 });
+
+app.get('/logout', function(req, res) {
+  res.clearCookie('access-token');
+  res.redirect('/login');
+});
+
 
 app.listen(3000, () => {
   console.log("SERVER RUNNING ON PORT 3000");
